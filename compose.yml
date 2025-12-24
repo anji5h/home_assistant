@@ -1,0 +1,29 @@
+services:
+  influxdb:
+    image: influxdb:2.8-alpine
+    container_name: home-assistant-influxdb
+    ports:
+      - "8086:8086"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - influx_data:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=home_assistant
+
+  api:
+    build: .
+    container_name: home-assistant-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  influx_data:
+    driver: local
