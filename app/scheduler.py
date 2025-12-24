@@ -12,11 +12,20 @@ def start_scheduler(simulator, influx):
 
     scheduler.add_job(
         func=lambda: influx.query(
-            'SELECT MEAN("temperature") AS "avg_temp", '
-            'MEAN("humidity") AS "avg_humidity" '
-            'FROM "environment" '
-            'WHERE time > now() - 1h '
-            'GROUP BY "location"'
+            f'''
+            from(bucket: "{influx.bucket}")
+            |> range(start: -1h)
+            |> filter(fn: (r) => r["_measurement"] == "environment")
+            |> filter(fn: (r) => r["_field"] == "temperature" or r["_field"] == "humidity")
+            |> group(columns: ["location", "_field"])
+            |> mean()
+            |> pivot(rowKey: ["location"], columnKey: ["_field"], valueColumn: "_value")
+            |> map(fn: (r) => ({{
+                location: r.location,
+                avg_temp: r.temperature,
+                avg_humidity: r.humidity
+            }}))
+            '''
         ),
         trigger="interval",
         seconds=30,

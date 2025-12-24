@@ -1,7 +1,20 @@
+import logging
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from influx import InfluxService
 from simulator import SensorSimulator
 from scheduler import start_scheduler
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure logging with timestamp
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 app = FastAPI(
     title="Home Assistant",
@@ -9,7 +22,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-influx = InfluxService()
+# Initialize InfluxService with environment variables
+influx = InfluxService(
+    host=os.getenv("INFLUXDB_HOST", "influxdb"),
+    port=int(os.getenv("INFLUXDB_PORT", "8086")),
+    token=os.getenv("INFLUXDB_TOKEN", ""),
+    org=os.getenv("INFLUXDB_ORG", "ut"),
+    bucket=os.getenv("INFLUXDB_BUCKET", "home_assistant"),
+)
 simulator = SensorSimulator()
 
 @app.on_event("startup")
@@ -26,20 +46,24 @@ def locations():
 
 @app.get("/temperature/average")
 def average_temperature(location: str | None = None, hours: int = 1):
-    where = f"AND location='{location}'" if location else ""
-    query = f"""
-        SELECT MEAN("temperature")
-        FROM "environment"
-        WHERE time > now() - {hours}h {where}
-    """
+    location_filter = f'|> filter(fn: (r) => r["location"] == "{location}")' if location else ""
+    query = f'''
+        from(bucket: "{influx.bucket}")
+        |> range(start: -{hours}h)
+        |> filter(fn: (r) => r["_measurement"] == "environment")
+        |> filter(fn: (r) => r["_field"] == "temperature")
+        {location_filter}
+        |> mean()
+    '''
     return influx.query(query)
 
 @app.get("/latest")
 def latest_readings(limit: int = 20):
-    query = f"""
-        SELECT *
-        FROM "environment"
-        ORDER BY time DESC
-        LIMIT {limit}
-    """
+    query = f'''
+        from(bucket: "{influx.bucket}")
+        |> range(start: -1h)
+        |> filter(fn: (r) => r["_measurement"] == "environment")
+        |> sort(columns: ["_time"], desc: true)
+        |> limit(n: {limit})
+    '''
     return influx.query(query)

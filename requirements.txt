@@ -1,4 +1,5 @@
 fastapi
 uvicorn
-influxdb
+influxdb-client
 apscheduler
+python-dotenv
