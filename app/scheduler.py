@@ -6,7 +6,7 @@ def start_scheduler(simulator, influx):
     scheduler.add_job(
         func=lambda: influx.write(simulator.generate()),
         trigger="interval",
-        seconds=5,
+        seconds=1,
         id="sensor_writer",
     )
 
@@ -28,7 +28,7 @@ def start_scheduler(simulator, influx):
             '''
         ),
         trigger="interval",
-        seconds=30,
+        seconds=15,
         id="dashboard_refresh",
     )
 
