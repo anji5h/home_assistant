@@ -53,7 +53,7 @@ class SensorSimulator:
         sensor_data: List[SensorPoint] = []
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        for _ in range(20):
+        for _ in range(100):
             sensor_id = random.choice(list(self.sensors.keys()))
             location = self.sensors[sensor_id]
             temp_range = self.temp_ranges[location]
