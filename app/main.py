@@ -30,7 +30,7 @@ influx = InfluxService(
     org=os.getenv("INFLUXDB_ORG", "ut"),
     bucket=os.getenv("INFLUXDB_BUCKET", "home_assistant"),
 )
-simulator = SensorSimulator()
+simulator = SensorSimulator(frequency=int(os.getenv("SIMULATOR_FREQUENCY", "100")))
 
 @app.on_event("startup")
 def startup():

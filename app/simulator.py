@@ -18,7 +18,8 @@ class SensorPoint(TypedDict):
     fields: SensorFields
 
 class SensorSimulator:
-    def __init__(self) -> None:
+    def __init__(self, frequency: int = 100) -> None:
+        self.frequency = frequency
         self.sensors: Dict[str, str] = {
             "0": "living_room",
             "1": "kitchen",
@@ -53,7 +54,7 @@ class SensorSimulator:
         sensor_data: List[SensorPoint] = []
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        for _ in range(100):
+        for _ in range(self.frequency):
             sensor_id = random.choice(list(self.sensors.keys()))
             location = self.sensors[sensor_id]
             temp_range = self.temp_ranges[location]
