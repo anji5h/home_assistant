@@ -18,8 +18,13 @@ class SensorPoint(TypedDict):
     fields: SensorFields
 
 class SensorSimulator:
-    def __init__(self, frequency: int = 100) -> None:
+    def __init__(self, frequency: int = 500, batch_interval: int = 5) -> None:
+        """
+        :param frequency: The number of data points to generate every 'batch_interval' seconds.
+        :param batch_interval: The interval (in seconds) at which to write the data.
+        """
         self.frequency = frequency
+        self.batch_interval = batch_interval
         self.sensors: Dict[str, str] = {
             "0": "living_room",
             "1": "kitchen",
@@ -51,29 +56,38 @@ class SensorSimulator:
         }
 
     def generate(self) -> List[SensorPoint]:
+        """
+        Generate data for the sensors and return a list of SensorPoint objects.
+        The data for each 'batch_interval' will include 'frequency' number of data points.
+        """
         sensor_data: List[SensorPoint] = []
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        for _ in range(self.frequency):
-            sensor_id = random.choice(list(self.sensors.keys()))
-            location = self.sensors[sensor_id]
-            temp_range = self.temp_ranges[location]
-            humidity_range = self.humidity_ranges[location]
+        for _ in range(self.batch_interval):
+            batch_data = []
 
-            sensor_data.append(
-                SensorPoint(
-                    measurement="environment",
-                    tags=SensorTags(
-                        sensor_id=f"sensor_{sensor_id}",
-                        location=location,
-                        timestamp=current_time,
-                    ),
-                    fields=SensorFields(
-                        temperature=round(random.uniform(*temp_range), 2),
-                        humidity=round(random.uniform(*humidity_range), 2),
-                        motion_detected=bool(random.getrandbits(1)),
-                    ),
+            for _ in range(self.frequency):
+                sensor_id = random.choice(list(self.sensors.keys()))
+                location = self.sensors[sensor_id]
+                temp_range = self.temp_ranges[location]
+                humidity_range = self.humidity_ranges[location]
+
+                batch_data.append(
+                    SensorPoint(
+                        measurement="environment",
+                        tags=SensorTags(
+                            sensor_id=f"sensor_{sensor_id}",
+                            location=location,
+                            timestamp=current_time,
+                        ),
+                        fields=SensorFields(
+                            temperature=round(random.uniform(*temp_range), 2),
+                            humidity=round(random.uniform(*humidity_range), 2),
+                            motion_detected=bool(random.getrandbits(1)),
+                        ),
+                    )
                 )
-            )
+
+            sensor_data.extend(batch_data)
 
         return sensor_data

@@ -34,7 +34,7 @@ simulator = SensorSimulator(frequency=int(os.getenv("SIMULATOR_FREQUENCY", "100"
 
 @app.on_event("startup")
 def startup():
-    start_scheduler(simulator, influx)
+    start_scheduler(simulator, influx, os.environ)
 
 @app.get("/health")
 def health():

@@ -1,12 +1,12 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 
-def start_scheduler(simulator, influx):
+def start_scheduler(simulator, influx, config):
     scheduler = BackgroundScheduler()
 
     scheduler.add_job(
         func=lambda: influx.write(simulator.generate()),
         trigger="interval",
-        seconds=1,
+        seconds=int(config.get("INFLUX_WRITE_INTERVAL", 5)),
         id="sensor_writer",
     )
 
@@ -28,7 +28,7 @@ def start_scheduler(simulator, influx):
             '''
         ),
         trigger="interval",
-        seconds=15,
+        seconds=int(config.get("INFLUX_READ_INTERVAL", 30)),
         id="dashboard_refresh",
     )
 
