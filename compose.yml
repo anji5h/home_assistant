@@ -1,16 +1,12 @@
 services:
   influxdb:
-    image: influxdb:2.8-alpine
+    image: influxdb:2.8
     container_name: home-assistant-influxdb
     ports:
       - "8086:8086"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    restart: unless-stopped
     volumes:
-      - influx_data:/var/lib/influxdb
+      - influx_data:/var/lib/influxdb2
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USER:-admin}
@@ -18,8 +14,12 @@ services:
       - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG:-ut}
       - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET:-home_assistant}
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN:-my-super-secret-auth-token}
-    env_file:
-      - .env
+      - INFLUXD_LOG_LEVEL=error
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
 
   api:
     build: .
@@ -36,3 +36,4 @@ services:
 volumes:
   influx_data:
     driver: local
+    name: home_assistant_influxdb_data
