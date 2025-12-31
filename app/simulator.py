@@ -5,7 +5,6 @@ from typing import Dict, List, Tuple, TypedDict
 class SensorTags(TypedDict):
     sensor_id: str
     location: str
-    timestamp: str
 
 class SensorFields(TypedDict):
     temperature: float
@@ -18,7 +17,7 @@ class SensorPoint(TypedDict):
     fields: SensorFields
 
 class SensorSimulator:
-    def __init__(self, frequency: int = 500, batch_interval: int = 5) -> None:
+    def __init__(self, frequency: int = 60, batch_interval: int = 5) -> None:
         """
         :param frequency: The number of data points to generate every 'batch_interval' seconds.
         :param batch_interval: The interval (in seconds) at which to write the data.
@@ -61,7 +60,6 @@ class SensorSimulator:
         The data for each 'batch_interval' will include 'frequency' number of data points.
         """
         sensor_data: List[SensorPoint] = []
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         for _ in range(self.batch_interval):
             batch_data = []
@@ -78,7 +76,6 @@ class SensorSimulator:
                         tags=SensorTags(
                             sensor_id=f"sensor_{sensor_id}",
                             location=location,
-                            timestamp=current_time,
                         ),
                         fields=SensorFields(
                             temperature=round(random.uniform(*temp_range), 2),
