@@ -12,14 +12,12 @@ load_dotenv()
 # Configure logging with timestamp
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
 app = FastAPI(
-    title="Home Assistant",
-    description="Smart Home Sensor Simulator",
-    version="1.0.0"
+    title="Home Assistant", description="Smart Home Sensor Simulator", version="1.0.0"
 )
 
 # Initialize InfluxService with environment variables
@@ -30,40 +28,50 @@ influx = InfluxService(
     org=os.getenv("INFLUXDB_ORG", "ut"),
     bucket=os.getenv("INFLUXDB_BUCKET", "home_assistant"),
 )
-simulator = SensorSimulator(frequency=int(os.getenv("SIMULATOR_FREQUENCY", "100")))
+simulator = SensorSimulator(
+    frequency=int(os.getenv("SIMULATOR_FREQUENCY", "100")),
+    batch_interval=int(os.getenv("SIMULATOR_BATCH_SIZE", "5")),
+)
+
 
 @app.on_event("startup")
 def startup():
     start_scheduler(simulator, influx, os.environ)
 
+
 @app.get("/health")
 def health():
     return {"status": "running"}
 
+
 @app.get("/locations")
 def locations():
-    return list(simulator.sensors.values())
+    return list(simulator.locations)
+
 
 @app.get("/temperature/average")
 def average_temperature(location: str | None = None, hours: int = 1):
-    location_filter = f'|> filter(fn: (r) => r["location"] == "{location}")' if location else ""
-    query = f'''
+    location_filter = (
+        f'|> filter(fn: (r) => r["location"] == "{location}")' if location else ""
+    )
+    query = f"""
         from(bucket: "{influx.bucket}")
         |> range(start: -{hours}h)
         |> filter(fn: (r) => r["_measurement"] == "environment")
         |> filter(fn: (r) => r["_field"] == "temperature")
         {location_filter}
         |> mean()
-    '''
+    """
     return influx.query(query)
 
+
 @app.get("/latest")
-def latest_readings(limit: int = 20):
-    query = f'''
+def latest_readings(limit: int = 100):
+    query = f"""
         from(bucket: "{influx.bucket}")
         |> range(start: -1h)
         |> filter(fn: (r) => r["_measurement"] == "environment")
         |> sort(columns: ["_time"], desc: true)
         |> limit(n: {limit})
-    '''
+    """
     return influx.query(query)

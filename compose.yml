@@ -4,36 +4,51 @@ services:
     container_name: home-assistant-influxdb
     ports:
       - "8086:8086"
+    mem_limit: 1536m
     restart: unless-stopped
     volumes:
       - influx_data:/var/lib/influxdb2
+      - ./init.sh:/docker-entrypoint-initdb.d/init.sh:ro
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USER:-admin}
       - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD:-password}
       - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG:-ut}
-      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET:-home_assistant}
+      - DOCKER_INFLUXDB_INIT_BUCKET=default
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN:-my-super-secret-auth-token}
       - INFLUXD_LOG_LEVEL=error
+      - INFLUXD_STORAGE_CACHE_MAX_MEMORY_SIZE=256MB
+      - INFLUXD_STORAGE_CACHE_SNAPSHOT_MEMORY_SIZE=64MB
+      - INFLUXD_STORAGE_WAL_MAX_SIZE=256MB
+      - INFLUXD_STORAGE_WAL_FSYNC_DELAY=0s
+      - INFLUXD_STORAGE_INDEX_VERSION=tsi1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
       interval: 30s
       timeout: 5s
       retries: 10
+    networks:
+      - home_assistant_network
 
   api:
     build: .
     container_name: home-assistant-api
+    restart: always
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     depends_on:
       influxdb:
         condition: service_healthy
-    restart: always
-    env_file:
-      - .env
+    networks:
+      - home_assistant_network
 
 volumes:
   influx_data:
     driver: local
     name: home_assistant_influxdb_data
+
+networks:
+  home_assistant_network:
+    driver: bridge
