@@ -29,7 +29,7 @@ influx = InfluxService(
 )
 simulator = SensorSimulator(
     points_per_batch=int(os.getenv("SIMULATOR_POINTS_PER_BATCH", "100")),
-    batch_interval_seconds=int(os.getenv("SIMULATOR_BATCH_INTERVAL_SECONDS", "5")),
+    batch_size=int(os.getenv("SIMULATOR_BATCH_SIZE", "5")),
 )
 
 
