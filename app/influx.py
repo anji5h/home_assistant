@@ -1,6 +1,7 @@
 import time
 import logging
 from typing import List, Dict, Any, Optional
+from simulator import SensorDataPoint
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.client.exceptions import InfluxDBError
@@ -43,7 +44,7 @@ class InfluxService:
                 logger.warning(f"Waiting for InfluxDB... {e}")
                 time.sleep(5)
 
-    def write(self, points: List[Dict[str, Any]]) -> None:
+    def write(self, points: List[SensorDataPoint]) -> None:
         influx_points = []
         for point in points:
             p = Point(point["measurement"])

@@ -1,10 +1,13 @@
+from influx import InfluxService
+from simulator import SensorSimulator
 from apscheduler.schedulers.background import BackgroundScheduler
 
-def start_scheduler(simulator, influx, config):
+
+def start_scheduler(simulator: SensorSimulator, influx: InfluxService, config: dict):
     scheduler = BackgroundScheduler()
 
     scheduler.add_job(
-        func=lambda: influx.write(simulator.generate()),
+        func=lambda: influx.write(simulator.generate_batch()),
         trigger="interval",
         seconds=int(config.get("INFLUX_WRITE_INTERVAL", 5)),
         id="sensor_writer",
@@ -12,9 +15,9 @@ def start_scheduler(simulator, influx, config):
 
     scheduler.add_job(
         func=lambda: influx.query(
-            f'''
+            f"""
             from(bucket: "{influx.bucket}")
-            |> range(start: -1h)
+            |> range(start: -30m)
             |> filter(fn: (r) => r["_measurement"] == "environment")
             |> filter(fn: (r) => r["_field"] == "temperature" or r["_field"] == "humidity")
             |> group(columns: ["location", "_field"])
@@ -25,7 +28,7 @@ def start_scheduler(simulator, influx, config):
                 avg_temp: r.temperature,
                 avg_humidity: r.humidity
             }}))
-            '''
+            """
         ),
         trigger="interval",
         seconds=int(config.get("INFLUX_READ_INTERVAL", 30)),

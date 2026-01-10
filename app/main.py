@@ -20,7 +20,6 @@ app = FastAPI(
     title="Home Assistant", description="Smart Home Sensor Simulator", version="1.0.0"
 )
 
-# Initialize InfluxService with environment variables
 influx = InfluxService(
     host=os.getenv("INFLUXDB_HOST", "influxdb"),
     port=int(os.getenv("INFLUXDB_PORT", "8086")),
@@ -29,8 +28,8 @@ influx = InfluxService(
     bucket=os.getenv("INFLUXDB_BUCKET", "home_assistant"),
 )
 simulator = SensorSimulator(
-    frequency=int(os.getenv("SIMULATOR_FREQUENCY", "100")),
-    batch_interval=int(os.getenv("SIMULATOR_BATCH_SIZE", "5")),
+    points_per_batch=int(os.getenv("SIMULATOR_POINTS_PER_BATCH", "100")),
+    batch_interval_seconds=int(os.getenv("SIMULATOR_BATCH_INTERVAL_SECONDS", "5")),
 )
 
 
@@ -46,7 +45,7 @@ def health():
 
 @app.get("/locations")
 def locations():
-    return list(simulator.locations)
+    return list(simulator.room_locations)
 
 
 @app.get("/temperature/average")
@@ -66,7 +65,7 @@ def average_temperature(location: str | None = None, hours: int = 1):
 
 
 @app.get("/latest")
-def latest_readings(limit: int = 100):
+def latest_readings(limit: int = 20):
     query = f"""
         from(bucket: "{influx.bucket}")
         |> range(start: -1h)

@@ -9,27 +9,35 @@ class SensorTags(TypedDict):
 
 
 class SensorFields(TypedDict):
-    temperature: int
+    temperature: float
     humidity: int
     motion_detected: bool
     pressure: int
     uv_index: int
 
-class SensorPoint(TypedDict):
+
+class SensorDataPoint(TypedDict):
     measurement: str
     tags: SensorTags
     fields: SensorFields
 
 
 class SensorSimulator:
-    def __init__(self, frequency: int = 100, batch_interval: int = 5) -> None:
+    def __init__(
+        self, points_per_batch: int = 100, batch_interval_seconds: int = 5
+    ) -> None:
         """
-        :param frequency: The number of data points to generate every 'batch_interval' seconds.
-        :param batch_interval: The interval (in seconds) at which to write the data.
+        Initialize the sensor data simulator.
+
+        :param points_per_batch: Number of individual sensor readings to generate in each batch.
+        This controls how many data points are produced every batch_interval_seconds.
+
+        :param batch_interval_seconds: 
+        Time interval (in seconds) at which a full batch of data is emitted.
         """
-        self.frequency = frequency
-        self.batch_interval = batch_interval
-        self.locations: set = {
+        self.points_per_batch = points_per_batch
+        self.batch_interval_seconds = batch_interval_seconds
+        self.room_locations = {
             "living_room",
             "kitchen",
             "bedroom",
@@ -39,33 +47,47 @@ class SensorSimulator:
             "office",
         }
 
-    def generate(self) -> List[SensorPoint]:
+    def generate_batch(self) -> List[SensorDataPoint]:
         """
-        Generate data for the sensors and return a list of SensorPoint objects.
-        The data for each 'batch_interval' will include 'frequency' number of data points.
-        """
-        sensor_data: List[SensorPoint] = []
+        Generate a batch of simulated sensor data points.
 
-        for _ in range(self.batch_interval):
-            batch_data = []
-            for _ in range(self.frequency):
-                batch_data.append(
-                    SensorPoint(
-                        measurement="environment",
-                        tags=SensorTags(
-                            sensor_id=str(uuid4()),
-                            location=random.choice(tuple(self.locations)),
-                        ),
-                        fields=SensorFields(
-                            temperature=random.randint(-60, 60),
-                            humidity=random.randint(20, 100),
-                            motion_detected=bool(random.getrandbits(1)),
-                            pressure=random.randint(900, 1050),
-                            uv_index=random.randint(0, 11),
-                        ),
+        One batch represents the data collected over `batch_interval_seconds`,
+        containing `points_per_batch` individual readings (e.g., one per sensor or per event).
+
+        Returns:
+            A list of SensorDataPoint objects ready for writing to InfluxDB.
+        """
+        batch_data: List[SensorDataPoint] = []
+
+        for _ in range(self.batch_interval_seconds):
+            second_readings: List[SensorDataPoint] = []
+
+            for _ in range(self.points_per_batch // self.batch_interval_seconds + 1):
+                if (
+                    len(second_readings) * self.batch_interval_seconds
+                    >= self.points_per_batch
+                ):
+                    break
+
+                sensor_reading = SensorDataPoint(
+                    measurement="environment",
+                    tags=SensorTags(
+                        sensor_id=str(uuid4()),
+                        location=random.choice(tuple(self.room_locations)),
+                    ),
+                    fields=SensorFields(
+                        temperature=round(random.uniform(-60, 60), 2),
+                        humidity=random.randint(20, 100),
+                        motion_detected=bool(random.getrandbits(1)),
+                        pressure=random.randint(900, 1050),
+                        uv_index=random.randint(0, 11),
                     ),
                 )
+                second_readings.append(sensor_reading)
 
-            sensor_data.extend(batch_data)
+            batch_data.extend(second_readings)
 
-        return sensor_data
+        if len(batch_data) > self.points_per_batch:
+            batch_data = batch_data[: self.points_per_batch]
+
+        return batch_data
