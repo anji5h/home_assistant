@@ -17,18 +17,21 @@ def start_scheduler(simulator: SensorSimulator, influx: InfluxService, config: d
         func=lambda: influx.query(
             f"""
             from(bucket: "{influx.bucket}")
-            |> range(start: -30m)
+            |> range(start: -10m)
             |> filter(fn: (r) => r["_measurement"] == "environment")
-            |> filter(fn: (r) => r["_field"] == "temperature" or r["_field"] == "humidity")
+            |> filter(fn: (r) =>
+                r["_field"] == "temperature" or
+                r["_field"] == "humidity" or
+                r["_field"] == "pressure" or
+                r["_field"] == "uv_index"
+            )
             |> group(columns: ["location", "_field"])
             |> mean()
-            |> pivot(rowKey: ["location"], columnKey: ["_field"], valueColumn: "_value")
-            |> map(fn: (r) => ({{
-                location: r.location,
-                avg_temp: r.temperature,
-                avg_humidity: r.humidity
-            }}))
-            """
+            |> pivot(
+                rowKey: ["location"],
+                columnKey: ["_field"],
+                valueColumn: "_value"
+            )"""
         ),
         trigger="interval",
         seconds=int(config.get("INFLUX_READ_INTERVAL", 30)),

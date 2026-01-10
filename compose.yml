@@ -4,7 +4,7 @@ services:
     container_name: home-assistant-influxdb
     ports:
       - "8086:8086"
-    mem_limit: 1536m
+    mem_limit: 1843m
     restart: unless-stopped
     volumes:
       - influx_data:/var/lib/influxdb2
