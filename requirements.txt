@@ -1,5 +1,5 @@
 fastapi
-uvicorn
-influxdb-client
+uvicorn[standard]
+asyncpg>=0.29.0
 apscheduler
-python-dotenv
+pydantic-settings

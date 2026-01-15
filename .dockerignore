@@ -1,0 +1,59 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables & secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Git & VCS
+.git/
+.gitignore
+.gitattributes
+
+# Docker files not needed in image
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+# Logs
+*.log
+
+# Test & coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+
+# Node (if frontend exists)
+node_modules/
+
+# Documentation
+docs/
+*.md

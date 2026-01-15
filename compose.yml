@@ -1,36 +1,37 @@
 services:
-  influxdb:
-    image: influxdb:2.8
-    container_name: home-assistant-influxdb
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: home-assistant-postgres
     ports:
-      - "8086:8086"
+      - "5432:5432"
     restart: unless-stopped
     volumes:
-      - influx_data:/var/lib/influxdb2
-      - ./init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
     environment:
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USER:-admin}
-      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD:-password}
-      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG:-ut}
-      - DOCKER_INFLUXDB_INIT_BUCKET=default
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN:-my-super-secret-auth-token}
-      - INFLUXD_LOG_LEVEL=error
-      - INFLUXD_STORAGE_CACHE_MAX_MEMORY_SIZE=256MB
-      - INFLUXD_STORAGE_CACHE_SNAPSHOT_MEMORY_SIZE=64MB
-      - INFLUXD_STORAGE_WAL_MAX_SIZE=256MB
-      - INFLUXD_STORAGE_WAL_FSYNC_DELAY=0s
-      - INFLUXD_STORAGE_INDEX_VERSION=tsi1
+      - POSTGRES_DB=${POSTGRES_DATABASE:-home_assistant}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_SHARED_BUFFERS=512MB
+      - POSTGRES_EFFECTIVE_CACHE_SIZE=1GB
+      - POSTGRES_MAINTENANCE_WORK_MEM=128MB
+      - POSTGRES_WORK_MEM=16MB
+      - POSTGRES_WAL_BUFFERS=16MB
+      - POSTGRES_CHECKPOINT_TIMEOUT=15min
+      - POSTGRES_MAX_WAL_SIZE=2GB
+      - POSTGRES_MIN_WAL_SIZE=1GB
+      - POSTGRES_MAX_CONNECTIONS=100
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
-      interval: 30s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DATABASE:-home_assistant}"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
     networks:
       - home_assistant_network
 
   api:
-    build: .
+    build:
+      dockerfile: Dockerfile
     container_name: home-assistant-api
     restart: always
     ports:
@@ -38,15 +39,15 @@ services:
     env_file:
       - .env
     depends_on:
-      influxdb:
+      postgres:
         condition: service_healthy
     networks:
       - home_assistant_network
 
 volumes:
-  influx_data:
+  postgres_data:
     driver: local
-    name: home_assistant_influxdb_data
+    name: home_assistant_postgres_data
 
 networks:
   home_assistant_network:

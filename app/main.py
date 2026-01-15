@@ -1,13 +1,10 @@
 import logging
-import os
-from dotenv import load_dotenv
 from fastapi import FastAPI
-from influx import InfluxService
+from lifespan import lifespan
+from workload import WORKLOAD_PROFILES
+from config import PostgresSettings
+from postgres import PostgresService
 from simulator import SensorSimulator
-from scheduler import start_scheduler
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Configure logging with timestamp
 logging.basicConfig(
@@ -16,61 +13,43 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
+settings = PostgresSettings()
+workload = WORKLOAD_PROFILES[settings.workload]
+
 app = FastAPI(
-    title="Home Assistant", description="Smart Home Sensor Simulator", version="1.0.0"
+    title="Home Assistant",
+    description="Smart Home Sensor Simulator with PostgreSQL + TimescaleDB",
+    version="2.0.0",
+    lifespan=lifespan,
 )
 
-influx = InfluxService(
-    host=os.getenv("INFLUXDB_HOST", "influxdb"),
-    port=int(os.getenv("INFLUXDB_PORT", "8086")),
-    token=os.getenv("INFLUXDB_TOKEN", ""),
-    org=os.getenv("INFLUXDB_ORG", "ut"),
-    bucket=os.getenv("INFLUXDB_BUCKET", "home_assistant"),
+postgres = PostgresService(
+    host=settings.postgres_host,
+    port=settings.postgres_port,
+    database=settings.postgres_database,
+    user=settings.postgres_user,
+    password=settings.postgres_password,
+    min_pool_size=workload.min_pool_size,
+    max_pool_size=workload.max_pool_size,
 )
+
 simulator = SensorSimulator(
-    points_per_batch=int(os.getenv("SIMULATOR_POINTS_PER_BATCH", "100")),
-    batch_size=int(os.getenv("SIMULATOR_BATCH_SIZE", "5")),
+    points_per_sec=workload.points_per_sec,
+    num_sensors=workload.num_sensors,
 )
 
-
-@app.on_event("startup")
-def startup():
-    start_scheduler(simulator, influx, os.environ)
+app.state.postgres = postgres
+app.state.simulator = simulator
+app.state.settings = settings
+app.state.workload = settings.workload
 
 
 @app.get("/health")
 def health():
-    return {"status": "running"}
-
-
-@app.get("/locations")
-def locations():
-    return list(simulator.room_locations)
-
-
-@app.get("/temperature/average")
-def average_temperature(location: str | None = None, hours: int = 1):
-    location_filter = (
-        f'|> filter(fn: (r) => r["location"] == "{location}")' if location else ""
-    )
-    query = f"""
-        from(bucket: "{influx.bucket}")
-        |> range(start: -{hours}h)
-        |> filter(fn: (r) => r["_measurement"] == "environment")
-        |> filter(fn: (r) => r["_field"] == "temperature")
-        {location_filter}
-        |> mean()
-    """
-    return influx.query(query)
-
-
-@app.get("/latest")
-def latest_readings(limit: int = 20):
-    query = f"""
-        from(bucket: "{influx.bucket}")
-        |> range(start: -1h)
-        |> filter(fn: (r) => r["_measurement"] == "environment")
-        |> sort(columns: ["_time"], desc: true)
-        |> limit(n: {limit})
-    """
-    return influx.query(query)
+    return {
+        "status": "running",
+        "workload": settings.workload.value,
+        "points_per_sec": workload.points_per_sec,
+        "num_writers": workload.num_writers,
+        "num_sensors": workload.num_sensors,
+    }
