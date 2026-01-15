@@ -4,7 +4,7 @@ set -e
 echo "Initializing PostgreSQL + TimescaleDB..."
 
 RETENTION_DAYS="${TIMESCALE_RETENTION_DAYS:-3}"
-COMPRESSION_DAYS="${TIMESCALE_COMPRESSION_DAYS:-2}"
+COMPRESSION_DAYS="${TIMESCALE_COMPRESSION_DAYS:-1}"
 
 echo "Retention: ${RETENTION_DAYS} days"
 echo "Compression after: ${COMPRESSION_DAYS} days"
