@@ -4,10 +4,10 @@ set -e
 echo "Initializing PostgreSQL + TimescaleDB..."
 
 RETENTION_DAYS="${TIMESCALE_RETENTION_DAYS:-3}"
-COMPRESSION_DAYS="${TIMESCALE_COMPRESSION_DAYS:-1}"
+COMPRESSION_HOURS="${TIMESCALE_COMPRESSION_HOURS:-6}"
 
 echo "Retention: ${RETENTION_DAYS} days"
-echo "Compression after: ${COMPRESSION_DAYS} days"
+echo "Compression after: ${COMPRESSION_HOURS} hours"
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
 
@@ -70,7 +70,7 @@ BEGIN
     ) THEN
         PERFORM add_compression_policy(
             'environment',
-            make_interval(days => ${COMPRESSION_DAYS})
+            make_interval(hours => ${COMPRESSION_HOURS})
         );
     END IF;
 END
