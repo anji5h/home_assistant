@@ -21,6 +21,7 @@ services:
       - POSTGRES_MAX_WAL_SIZE=2GB
       - POSTGRES_MIN_WAL_SIZE=1GB
       - POSTGRES_MAX_CONNECTIONS=100
+      - TS_TUNE_DISABLE=true
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DATABASE:-home_assistant}"]
       interval: 10s
