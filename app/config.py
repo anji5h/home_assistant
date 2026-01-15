@@ -21,8 +21,8 @@ class PostgresSettings(BaseSettings):
     workload: WorkloadProfile = Field(
         default=WorkloadProfile.LOW, env="WORKLOAD"
     )
-    write_interval: int = Field(default=10, env="WRITE_INTERVAL")
-    read_interval: int = Field(default=20, env="READ_INTERVAL")
+    write_interval: int = Field(default=1, env="WRITE_INTERVAL")
+    read_interval: int = Field(default=10, env="READ_INTERVAL")
 
     class Config:
         env_file = ".env"
