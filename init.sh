@@ -3,10 +3,10 @@ set -e
 
 echo "Initializing PostgreSQL + TimescaleDB..."
 
-RETENTION_DAYS="${TIMESCALE_RETENTION_DAYS:-3}"
+RETENTION_HOURS="${TIMESCALE_RETENTION_HOURS:-24}"
 COMPRESSION_HOURS="${TIMESCALE_COMPRESSION_HOURS:-6}"
 
-echo "Retention: ${RETENTION_DAYS} days"
+echo "Retention: ${RETENTION_HOURS} hours"
 echo "Compression after: ${COMPRESSION_HOURS} hours"
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
@@ -87,7 +87,7 @@ BEGIN
     ) THEN
         PERFORM add_retention_policy(
             'environment',
-            make_interval(days => ${RETENTION_DAYS})
+            make_interval(hours => ${RETENTION_HOURS})
         );
     END IF;
 END
