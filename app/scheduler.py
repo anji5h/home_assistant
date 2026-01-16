@@ -22,8 +22,7 @@ def start_scheduler(
     
     Supports multiple concurrent writers based on workload profile:
     - LOW: 1 writer
-    - MEDIUM: 2 concurrent writers
-    - HIGH: 4-6 concurrent writers
+    - HIGH: 4 writers
     
     Returns scheduler so lifespan can shut it down cleanly.
     """

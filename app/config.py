@@ -6,7 +6,6 @@ from typing import Tuple
 
 class WorkloadProfile(str, Enum):
     HIGH = "HIGH"
-    MEDIUM = "MEDIUM"
     LOW = "LOW"
 
 

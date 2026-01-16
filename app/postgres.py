@@ -124,14 +124,11 @@ class PostgresService:
         if not records:
             return
 
-        # Split into batches to avoid memory issues
         for i in range(0, len(records), batch_size):
             batch = records[i:i + batch_size]
             
             try:
                 async with self.pool.acquire() as conn:
-                    # Use COPY for maximum performance (fastest bulk insert)
-                    # This is more efficient than individual INSERTs
                     await conn.copy_records_to_table(
                         'environment',
                         records=[
@@ -158,7 +155,6 @@ class PostgresService:
                     )
             except Exception as e:
                 logger.error(f"Error writing batch to PostgreSQL: {e}")
-                # Optionally retry or handle error
                 raise
 
     async def query(
