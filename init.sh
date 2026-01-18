@@ -70,7 +70,7 @@ BEGIN
     ) THEN
         PERFORM add_compression_policy(
             'environment',
-            make_interval(hours => ${COMPRESSION_HOURS})
+            compress_after => INTERVAL '${COMPRESSION_HOURS} hours')
         );
     END IF;
 END
@@ -86,8 +86,7 @@ BEGIN
           AND hypertable_name = 'environment'
     ) THEN
         PERFORM add_retention_policy(
-            'environment',
-            make_interval(hours => ${RETENTION_HOURS})
+            'environment', INTERVAL '${RETENTION_HOURS} hours'
         );
     END IF;
 END
