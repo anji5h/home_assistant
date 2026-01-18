@@ -63,9 +63,9 @@ def start_scheduler(
     async def read_job():
         """Read job for dashboard/analytics queries."""
         try:
-            interval = '6 hour' if workload_profile == WorkloadProfile.HIGH else '3 hour'
+            interval = '3 hour' if workload_profile == WorkloadProfile.HIGH else '1 hour'
             query = f"""
-                SELECT 
+                SELECT
                     location,
                     AVG(temperature) as avg_temperature,
                     AVG(humidity) as avg_humidity,
