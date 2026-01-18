@@ -70,7 +70,7 @@ BEGIN
     ) THEN
         PERFORM add_compression_policy(
             'environment',
-            compress_after => INTERVAL '${COMPRESSION_HOURS} hours')
+            compress_after => INTERVAL '${COMPRESSION_HOURS} hours'
         );
     END IF;
 END
