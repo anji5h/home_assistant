@@ -63,48 +63,20 @@ def start_scheduler(
     async def read_job():
         """Read job for dashboard/analytics queries."""
         try:
-            if workload_profile == WorkloadProfile.HIGH:
-                query = """
-                    WITH bucketed AS (
-                        SELECT
-                            time_bucket('5 minutes', created_at) AS bucket,
-                            location,
-                            temperature,
-                            humidity,
-                            pressure,
-                            uv_index
-                        FROM environment
-                        WHERE created_at > NOW() - INTERVAL '12 hours'
-                    )
-                    SELECT
-                        location,
-                        bucket,
-                        AVG(temperature) AS avg_temp,
-                        STDDEV(temperature) AS stddev_temp,
-                        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY temperature) AS p95_temp,
-                        AVG(humidity) AS avg_humidity,
-                        STDDEV(humidity) AS stddev_humidity,
-                        AVG(pressure) AS avg_pressure,
-                        AVG(uv_index) AS avg_uv
-                    FROM bucketed
-                    GROUP BY location, bucket
-                    ORDER BY location, bucket;
-                    """
-            else:
-                query = """
-                    SELECT 
-                        location,
-                        AVG(temperature) as avg_temperature,
-                        AVG(humidity) as avg_humidity,
-                        AVG(pressure) as avg_pressure,
-                        AVG(uv_index) as avg_uv_index
-                    FROM environment
-                    WHERE created_at > NOW() - INTERVAL '1 hour'
-                    GROUP BY location
-                    ORDER BY location;
+            interval = '12 hour' if workload_profile == WorkloadProfile.HIGH else '3 hour'
+            query = """
+                SELECT 
+                    location,
+                    AVG(temperature) as avg_temperature,
+                    AVG(humidity) as avg_humidity,
+                    AVG(pressure) as avg_pressure,
+                    AVG(uv_index) as avg_uv_index
+                FROM environment
+                WHERE created_at > NOW() - INTERVAL '%s'
+                GROUP BY location
+                ORDER BY location;
                 """
-
-            results = await postgres.query(query)
+            results = await postgres.query(query, (interval,))
             logger.debug(f"Read job returned {len(results)} rows")
         except Exception as e:
             logger.exception("Read job failed: %s", e)
