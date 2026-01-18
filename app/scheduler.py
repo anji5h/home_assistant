@@ -63,8 +63,8 @@ def start_scheduler(
     async def read_job():
         """Read job for dashboard/analytics queries."""
         try:
-            interval = '12 hour' if workload_profile == WorkloadProfile.HIGH else '3 hour'
-            query = """
+            interval = '6 hour' if workload_profile == WorkloadProfile.HIGH else '3 hour'
+            query = f"""
                 SELECT 
                     location,
                     AVG(temperature) as avg_temperature,
@@ -72,12 +72,12 @@ def start_scheduler(
                     AVG(pressure) as avg_pressure,
                     AVG(uv_index) as avg_uv_index
                 FROM environment
-                WHERE created_at > NOW() - INTERVAL '%s'
+                WHERE created_at > NOW() - INTERVAL '{interval}'
                 GROUP BY location
                 ORDER BY location;
                 """
-            results = await postgres.query(query, (interval,))
-            logger.debug(f"Read job returned {len(results)} rows")
+            await postgres.query(query)
+            logger.debug(f"Read job executed successfully")
         except Exception as e:
             logger.exception("Read job failed: %s", e)
 
