@@ -63,8 +63,7 @@ def start_scheduler(
     async def read_job():
         """Read job for dashboard/analytics queries."""
         try:
-            interval = '3 hour' if workload_profile == WorkloadProfile.HIGH else '1 hour'
-            query = f"""
+            query = """
                 SELECT
                     location,
                     AVG(temperature) as avg_temperature,
@@ -72,7 +71,7 @@ def start_scheduler(
                     AVG(pressure) as avg_pressure,
                     AVG(uv_index) as avg_uv_index
                 FROM environment
-                WHERE created_at > NOW() - INTERVAL '{interval}'
+                WHERE created_at > NOW() - INTERVAL '2 hour'
                 GROUP BY location
                 ORDER BY location;
                 """
