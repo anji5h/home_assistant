@@ -71,7 +71,7 @@ def start_scheduler(
                     AVG(pressure) as avg_pressure,
                     AVG(uv_index) as avg_uv_index
                 FROM environment
-                WHERE created_at > NOW() - INTERVAL '2 hour'
+                WHERE created_at > NOW() - INTERVAL '1 hour'
                 GROUP BY location
                 ORDER BY location;
                 """
