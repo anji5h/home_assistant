@@ -44,8 +44,8 @@ This system migrates from InfluxDB v2 to PostgreSQL + TimescaleDB to address unb
    WORKLOAD=LOW
    WRITE_INTERVAL=1
    READ_INTERVAL=20
-   MIN_POOL_SIZE=2
-   MAX_POOL_SIZE=10
+   TIMESCALE_RETENTION_HOURS=72
+   TIMESCALE_COMPRESSION_HOURS=6
    ```
 
 3. **Start services**:
@@ -237,8 +237,8 @@ Memory usage is **predictable and bounded**, unlike InfluxDB.
 | `WORKLOAD` | `LOW` | Workload profile (LOW/MEDIUM/HIGH) |
 | `WRITE_INTERVAL` | `1` | Write job interval (seconds) |
 | `READ_INTERVAL` | `20` | Read job interval (seconds) |
-| `MIN_POOL_SIZE` | `2` | Minimum connection pool size |
-| `MAX_POOL_SIZE` | `10` | Maximum connection pool size |
+| `TIMESCALE_RETENTION_HOURS` | `2` | TimeScale DB retention hours |
+| `TIMESCALE_COMPRESSION_HOURS` | `10` | TimeScale DB compression hours |
 
 ## Development
 
@@ -255,27 +255,15 @@ Memory usage is **predictable and bounded**, unlike InfluxDB.
 │   ├── main.py            # FastAPI application
 │   └── lifespan.py        # Application lifecycle
 ├── compose.yml            # Docker Compose configuration
-├── init.sql               # Database initialization script
+├── init.sh               # Database initialization script
 ├── requirements.txt       # Python dependencies
-└── MIGRATION_GUIDE.md     # Detailed migration guide
 ```
 
 ### Running Locally
 
-1. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-2. **Start PostgreSQL**:
-   ```bash
-   docker-compose up -d postgres
-   ```
-
-3. **Run API**:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+  ```bash
+   docker compose up -d --build 
+  ```
 
 ## Troubleshooting
 
