@@ -9,7 +9,7 @@ WORKLOAD_PROFILES: dict[WorkloadProfile, WorkloadConfig] = {
         max_pool_size=5,
     ),
     WorkloadProfile.HIGH: WorkloadConfig(
-        points_per_sec=1000,
+        points_per_sec=1250,
         num_writers=4,
         num_sensors=100000,
         min_pool_size=5,
