@@ -227,18 +227,38 @@ Memory usage is **predictable and bounded**, unlike InfluxDB.
 
 ### Environment Variables
 
+All configuration is managed through environment variables defined in `.env` file. Use `.env.example` as a template.
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `POSTGRES_HOST` | `postgres` | PostgreSQL hostname |
+| `POSTGRES_HOST` | `postgres` | PostgreSQL hostname (use `postgres` in Docker Compose) |
 | `POSTGRES_PORT` | `5432` | PostgreSQL port |
-| `POSTGRES_DATABASE` | `home_assistant` | Database name |
-| `POSTGRES_USER` | `postgres` | Database user |
-| `POSTGRES_PASSWORD` | `postgres` | Database password |
-| `WORKLOAD` | `LOW` | Workload profile (LOW/MEDIUM/HIGH) |
-| `WRITE_INTERVAL` | `1` | Write job interval (seconds) |
-| `READ_INTERVAL` | `20` | Read job interval (seconds) |
-| `TIMESCALE_RETENTION_HOURS` | `2` | TimeScale DB retention hours |
-| `TIMESCALE_COMPRESSION_HOURS` | `10` | TimeScale DB compression hours |
+| `POSTGRES_DATABASE` | `home_assistant` | Database name for sensor data storage |
+| `POSTGRES_USER` | `postgres` | PostgreSQL database user |
+| `POSTGRES_PASSWORD` | `postgres` | PostgreSQL user password |
+| `WORKLOAD` | `LOW` | Workload profile: `LOW`, `MEDIUM`, or `HIGH` |
+| `WRITE_INTERVAL` | `1` | Write job interval in seconds |
+| `READ_INTERVAL` | `20` | Read/query job interval in seconds |
+| `TIMESCALE_RETENTION_HOURS` | `72` | Data retention period in hours (automatic deletion after this period) |
+| `TIMESCALE_COMPRESSION_HOURS` | `6` | Data compression threshold in hours (automatic compression after this period) |
+
+#### Quick Configuration
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Update values as needed for your environment
+
+3. Start services:
+   ```bash
+   docker compose up -d
+   ```
+
+#### Environment File Location
+
+See [.env.example](.env.example) for detailed comments on each configuration option.
 
 ## Development
 
@@ -295,7 +315,15 @@ See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for detailed migration instructions
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### License Highlights
+
+- **MIT License**: Permissive open-source license
+- **Free to Use**: Commercial and personal use allowed
+- **Modify & Redistribute**: You can modify and redistribute the code
+- **Attribution**: Provide attribution as specified in the LICENSE file
+- **No Warranty**: The software is provided "as is" without warranty
 
 ## References
 
